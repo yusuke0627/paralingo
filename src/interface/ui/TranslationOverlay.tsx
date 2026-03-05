@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PosColoredSentence } from './PosColoredSentence';
 // Note: Assuming Tamagui components are available in the project setup
 // import { View, Text, ScrollView, Button, XStack, YStack } from 'tamagui';
 
@@ -42,7 +43,9 @@ export const TranslationOverlay: React.FC = () => {
           <div key={index} style={{ borderBottom: '1px solid #333', paddingBottom: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 'bold', margin: 0 }}>{pair.en}</p>
+                <p style={{ fontWeight: 'bold', margin: 0, fontSize: '1.1em' }}>
+                  <PosColoredSentence text={pair.en} />
+                </p>
                 <p style={{ color: '#aaa', margin: '4px 0 0 0' }}>{pair.ja}</p>
               </div>
               <button
