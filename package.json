@@ -2,8 +2,14 @@
   "name": "paralingo",
   "version": "1.0.0",
   "description": "ParaLingo is a Mac-first translation and vocabulary app",
-  "main": "index.js",
+  "main": "dist-main/main.js",
   "scripts": {
+    "dev:frontend": "vite",
+    "dev:main": "tsc -p tsconfig.main.json && electron .",
+    "start": "concurrently \"npm run dev:frontend\" \"wait-on tcp:5173 && npm run dev:main\"",
+    "build:frontend": "vite build",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build": "npm run build:frontend && npm run build:main",
     "test": "vitest"
   },
   "keywords": [],
@@ -13,12 +19,23 @@
     "@google/generative-ai": "^0.24.1",
     "compromise": "^14.15.0",
     "dotenv": "^17.3.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "sqlite3": "^5.1.7",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@types/sqlite3": "^3.1.11",
+    "@vitejs/plugin-react": "^5.1.4",
+    "concurrently": "^9.2.1",
+    "electron": "^40.7.0",
+    "electron-builder": "^26.8.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
-    "vitest": "^1.2.1"
+    "vite": "^7.3.1",
+    "vitest": "^1.2.1",
+    "wait-on": "^9.0.4"
   }
 }
