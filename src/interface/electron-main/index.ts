@@ -1,34 +1,60 @@
-import { ipcMain, globalShortcut, clipboard, BrowserWindow } from 'electron';
+import { ipcMain, globalShortcut, clipboard, BrowserWindow, app } from 'electron';
+import path from 'path';
+
+// Use cases
 import { RunTranslationFromClipboard } from '../../application/use-cases/RunTranslationFromClipboard';
+// Ports & Gateways
 import { ElectronClipboardPort } from '../../infrastructure/os/ElectronClipboardPort';
-import { MockTranslatorGateway } from '../../infrastructure/ai/MockTranslatorGateway';
+import { GeminiTranslatorGateway } from '../../infrastructure/ai/GeminiTranslatorGateway';
+import { SQLiteVocabRepository } from '../../infrastructure/db/SQLiteVocabRepository';
+import { LocalFileSettingsRepository } from '../../infrastructure/os/LocalSettingsRepository';
+import { VocabMemo } from '../../domain/entities';
 
 export class ElectronMainInterface {
   private translationUseCase: RunTranslationFromClipboard;
+  private settingsRepository: LocalFileSettingsRepository;
+  private vocabRepository: SQLiteVocabRepository;
 
   constructor(private mainWindow: BrowserWindow) {
+    const userDataPath = app.getPath('userData');
+    
+    // Dependencies
+    this.settingsRepository = new LocalFileSettingsRepository(userDataPath);
+    this.vocabRepository = new SQLiteVocabRepository(path.join(userDataPath, 'paralingo.sqlite'));
     const clipboardPort = new ElectronClipboardPort(clipboard);
-    const translatorGateway = new MockTranslatorGateway();
+    const translatorGateway = new GeminiTranslatorGateway(this.settingsRepository);
+
+    // Use Case definition
     this.translationUseCase = new RunTranslationFromClipboard(clipboardPort, translatorGateway);
   }
 
-  setup() {
-    // 1. Global Shortcut registration
-    globalShortcut.register('CommandOrControl+Shift+T', async () => {
-      console.log('Global shortcut triggered: Cmd+Shift+T');
-      try {
-        const result = await this.translationUseCase.execute();
-        this.mainWindow.webContents.send('translation:result', { ok: true, sentences: result });
-        // Make window visible if hidden
-        if (!this.mainWindow.isVisible()) {
-          this.mainWindow.show();
-        }
-      } catch (error: any) {
-        this.mainWindow.webContents.send('translation:result', { ok: false, error: error.message });
-      }
-    });
+  async setup() {
+    const settings = await this.settingsRepository.getSettings();
+    const shortcutKey = settings.globalShortcut || 'CommandOrControl+Shift+T';
 
-    // 2. IPC handlers
+    // 1. Global Shortcut registration
+    try {
+      const ret = globalShortcut.register(shortcutKey, async () => {
+        console.log(`Global shortcut triggered: ${shortcutKey}`);
+        try {
+          const result = await this.translationUseCase.execute();
+          this.mainWindow.webContents.send('translation:result', { ok: true, sentences: result });
+          if (!this.mainWindow.isVisible()) {
+            this.mainWindow.show();
+          }
+        } catch (error: any) {
+          this.mainWindow.webContents.send('translation:result', { ok: false, error: error.message });
+        }
+      });
+
+      if (!ret) {
+        console.warn('Registration failed for shortcut:', shortcutKey);
+      }
+    } catch (e) {
+      console.error('Failed to register shortcut', e);
+    }
+
+    // 2. IPC handlers for Frontend
     ipcMain.handle('translation:runFromClipboard', async () => {
       try {
         const result = await this.translationUseCase.execute();
@@ -37,5 +63,20 @@ export class ElectronMainInterface {
         return { ok: false, error: error.message };
       }
     });
+
+    ipcMain.handle('vocab:save', async (_, memo: VocabMemo) => {
+      try {
+        await this.vocabRepository.save(memo);
+        return { ok: true };
+      } catch (error: any) {
+        return { ok: false, error: error.message };
+      }
+    });
+    
+    // Additional IPC handlers for React to fetch settings, list vocab, etc. can go here
+  }
+
+  cleanup() {
+    globalShortcut.unregisterAll();
   }
 }
