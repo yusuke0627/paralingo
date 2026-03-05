@@ -1,14 +1,21 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { TamaguiProvider, Theme } from 'tamagui';
+import tamaguiConfig from '../../tamagui.config';
 import { TranslationOverlay } from './TranslationOverlay';
 
-// Make background transparent for the overlay effect
+// Import Tamagui CSS
+import 'tamagui/dist/tamagui.css';
+
 const App = () => {
   return (
-    <div style={{ width: '100%', height: '100%', padding: 10 }}>
-      {/* We can add Tamagui Provider here later, using normal React for now */}
-      <TranslationOverlay />
-    </div>
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      <Theme name="dark">
+        <div style={{ width: '100%', height: '100%', padding: 10 }}>
+          <TranslationOverlay />
+        </div>
+      </Theme>
+    </TamaguiProvider>
   );
 };
 

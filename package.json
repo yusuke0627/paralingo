@@ -17,11 +17,18 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@tamagui/config": "^2.0.0-rc.22",
+    "@tamagui/lucide-icons": "^2.0.0-rc.22",
+    "@tamagui/vite-plugin": "^2.0.0-rc.22",
     "compromise": "^14.15.0",
     "dotenv": "^17.3.1",
+    "lucide-react-native": "^0.577.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-native-svg": "^15.15.3",
+    "react-native-web": "^0.21.2",
     "sqlite3": "^5.1.7",
+    "tamagui": "^2.0.0-rc.22",
     "zod": "^3.22.4"
   },
   "devDependencies": {

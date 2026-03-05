@@ -1,65 +1,94 @@
 import React, { useState, useEffect } from 'react';
+import { YStack, XStack, Text, Card, Button, ScrollView, Separator, Theme } from 'tamagui';
+import { Save, Copy, CheckCircle } from '@tamagui/lucide-icons';
 import { PosColoredSentence } from './PosColoredSentence';
-// Note: Assuming Tamagui components are available in the project setup
-// import { View, Text, ScrollView, Button, XStack, YStack } from 'tamagui';
+
+interface TranslationPair {
+  en: string;
+  ja: string;
+}
 
 export const TranslationOverlay: React.FC = () => {
-  const [results, setResults] = useState<{ en: string, ja: string }[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [pairs, setPairs] = useState<TranslationPair[]>([]);
+  const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    // Listen for translation results via IPC
+    // @ts-ignore - paralingo is exposed via preload script
     if (window.paralingo) {
       window.paralingo.onTranslationResult((result: any) => {
-        if (result.ok) {
-          setResults(result.sentences);
-          setError(null);
-        } else {
-          setError(result.error);
-        }
+        setPairs(result.pairs);
+        setSavedIds(new Set());
       });
     }
   }, []);
 
-  const handleSave = (en: string, ja: string) => {
-    if (window.paralingo) {
-      window.paralingo.saveVocab({
-        term: en,
-        translation: [ja],
-        content: [results.map(r => r.en).join(' ')],
-        createdAt: new Date()
-      });
-    }
+  const handleSave = async (pair: TranslationPair, index: number) => {
+    // @ts-ignore
+    await window.paralingo.saveVocab(pair.en, pair.ja);
+    setSavedIds(prev => new Set(prev).add(index));
   };
 
+  if (pairs.length === 0) {
+    return (
+      <Theme name="dark">
+        <YStack f={1} jc="center" ai="center" bg="$background05" br="$6" p="$4" space>
+          <Text color="$color10" italic>Copy English text to translate...</Text>
+        </YStack>
+      </Theme>
+    );
+  }
+
   return (
-    <div style={{ padding: 20, backgroundColor: '#1a1a1a', color: 'white', borderRadius: 8 }}>
-      <h1 style={{ fontSize: 18, marginBottom: 16 }}>ParaLingo Translation</h1>
+    <Theme name="dark">
+      <Card
+        f={1}
+        bg="$background"
+        br="$6"
+        elevate
+        bordered
+        animation="bouncy"
+        enterStyle={{ opacity: 0, scale: 0.9, y: 10 }}
+        shadowColor="$shadowColor"
+        shadowRadius={20}
+      >
+        <ScrollView p="$4">
+          <YStack space="$4">
+            {pairs.map((pair, index) => (
+              <YStack key={index} space="$2">
+                <XStack jc="space-between" ai="flex-start" space>
+                  <YStack f={1} space="$1">
+                    <Text fontSize="$6" fontWeight="700" lineHeight="$6">
+                      <PosColoredSentence text={pair.en} />
+                    </Text>
+                    <Text color="$color11" fontSize="$4" lineHeight="$4">
+                      {pair.ja}
+                    </Text>
+                  </YStack>
 
-      {error && <p style={{ color: '#ff6b6b' }}>{error}</p>}
+                  <XStack space="$2">
+                    <Button
+                      size="$3"
+                      circular
+                      icon={savedIds.has(index) ? <CheckCircle color="$green10" /> : <Save />}
+                      chromeless
+                      onPress={() => handleSave(pair, index)}
+                      disabled={savedIds.has(index)}
+                      opacity={savedIds.has(index) ? 0.5 : 1}
+                    />
+                  </XStack>
+                </XStack>
+                {index < pairs.length - 1 && <Separator borderColor="$borderColor" opacity={0.5} />}
+              </YStack>
+            ))}
+          </YStack>
+        </ScrollView>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {results.map((pair, index) => (
-          <div key={index} style={{ borderBottom: '1px solid #333', paddingBottom: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 'bold', margin: 0, fontSize: '1.1em' }}>
-                  <PosColoredSentence text={pair.en} />
-                </p>
-                <p style={{ color: '#aaa', margin: '4px 0 0 0' }}>{pair.ja}</p>
-              </div>
-              <button
-                onClick={() => handleSave(pair.en, pair.ja)}
-                style={{ marginLeft: 12, padding: '4px 8px', cursor: 'pointer' }}
-              >
-                Save
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {results.length === 0 && !error && <p>Waiting for translation... (Press Cmd+Shift+T)</p>}
-    </div>
+        <Card.Footer p="$3" b={0}>
+          <XStack f={1} jc="flex-end" space="$2">
+            <Button size="$2" themeInverse circular icon={<Copy size={12} />} chromeless />
+          </XStack>
+        </Card.Footer>
+      </Card>
+    </Theme>
   );
 };

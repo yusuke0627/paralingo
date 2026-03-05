@@ -1,9 +1,19 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { tamaguiPlugin } from '@tamagui/vite-plugin';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [react()],
+  define: {
+    'process.env.TAMAGUI_TARGET': JSON.stringify('web'),
+  },
+  plugins: [
+    react(),
+    tamaguiPlugin({
+      config: './src/tamagui.config.ts',
+      components: ['tamagui'],
+    }),
+  ],
   build: {
     outDir: 'dist',
     emptyOutDir: true,
@@ -11,6 +21,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'react-native': 'react-native-web',
     },
   },
   server: {

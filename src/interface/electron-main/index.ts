@@ -38,7 +38,7 @@ export class ElectronMainInterface {
         console.log(`Global shortcut triggered: ${shortcutKey}`);
         try {
           const result = await this.translationUseCase.execute();
-          this.mainWindow.webContents.send('translation:result', { ok: true, sentences: result });
+          this.mainWindow.webContents.send('translation-result', { pairs: result });
           if (!this.mainWindow.isVisible()) {
             this.mainWindow.show();
           }
@@ -55,18 +55,38 @@ export class ElectronMainInterface {
     }
 
     // 2. IPC handlers for Frontend
-    ipcMain.handle('translation:runFromClipboard', async () => {
+    ipcMain.handle('run-translation', async () => {
       try {
         const result = await this.translationUseCase.execute();
-        return { ok: true, sentences: result };
+        return { ok: true, pairs: result };
       } catch (error: any) {
         return { ok: false, error: error.message };
       }
     });
 
-    ipcMain.handle('vocab:save', async (_, memo: VocabMemo) => {
+    ipcMain.handle('save-vocab', async (_, en: string, ja: string) => {
       try {
+        // Create a basic VocabMemo
+        const memo: VocabMemo = {
+          term: en,
+          translation: [ja],
+          content: [], // Context will be added later if needed
+          createdAt: new Date()
+        };
         await this.vocabRepository.save(memo);
+        return { ok: true };
+      } catch (error: any) {
+        return { ok: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('get-settings', async () => {
+      return await this.settingsRepository.getSettings();
+    });
+
+    ipcMain.handle('save-settings', async (_, settings: any) => {
+      try {
+        await this.settingsRepository.saveSettings(settings);
         return { ok: true };
       } catch (error: any) {
         return { ok: false, error: error.message };
