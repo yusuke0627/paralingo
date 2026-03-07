@@ -3,6 +3,7 @@ import { TranslationPair } from "../../domain/entities";
 import { SettingsRepository } from "../../application/ports/SettingsRepository";
 import { GeminiTranslatorGateway } from "./GeminiTranslatorGateway";
 import { OpenAITranslatorGateway } from "./OpenAITranslatorGateway";
+import { TranslationCore } from "../../domain/services/TranslationCore";
 
 /**
  * Orchestrates multiple AI translation providers with:
@@ -12,6 +13,7 @@ import { OpenAITranslatorGateway } from "./OpenAITranslatorGateway";
  */
 export class MultiProviderTranslatorOrchestrator implements TranslatorGateway {
   private lastUsedProvider: 'gemini' | 'openai' = 'openai'; // Start with openai so first call goes to gemini
+  private translationCore = new TranslationCore();
 
   constructor(private settingsRepository: SettingsRepository) {}
 
@@ -88,8 +90,7 @@ export class MultiProviderTranslatorOrchestrator implements TranslatorGateway {
   }
 
   private async webTranslateFallback(text: string): Promise<TranslationPair[]> {
-    // Simple sentence splitting
-    const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    const sentences = this.translationCore.splitIntoSentences(text);
     const results: TranslationPair[] = [];
 
     for (const sentence of sentences) {
