@@ -41,9 +41,18 @@ export class TranslationCore {
    */
   splitIntoSentences(text: string): string[] {
     if (!text) return [];
-    const normalized = text.trim().replace(/\s*\n+\s*/g, ' ');
+    const normalized = text.replace(/\r\n/g, '\n').trim();
     if (!normalized) return [];
-    // Basic regex for sentence splitting
+
+    // strict newline mode: if at least one newline exists, each line is treated as one sentence.
+    if (normalized.includes('\n')) {
+      return normalized
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+    }
+
+    // Fallback: basic punctuation splitting for a single-line paragraph.
     return normalized
       .split(/(?<=[.!?])\s+/)
       .map((sentence) => sentence.trim())
