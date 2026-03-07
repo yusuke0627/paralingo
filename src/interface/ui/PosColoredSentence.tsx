@@ -1,46 +1,106 @@
 import React from 'react';
-import nlp from 'compromise';
+import { Text, YStack } from 'tamagui';
+import { PosToken } from '../../domain/entities';
 
 interface PosColoredSentenceProps {
   text: string;
+  posTokens?: PosToken[];
+  sentenceIndex: number;
+  showSlashGuide?: boolean;
 }
 
-export const PosColoredSentence: React.FC<PosColoredSentenceProps> = ({ text }) => {
-  // Parse the sentence using compromise
-  const doc = nlp(text);
+const CLAUSE_TRIGGER_WORDS = new Set([
+  'that',
+  'which',
+  'who',
+  'whom',
+  'whose',
+  'when',
+  'where',
+  'because',
+  'if',
+  'although',
+  'while',
+  'but',
+  'or',
+]);
 
-  // Get all terms (words and punctuation)
-  const terms = doc.terms().out('array');
-  const details = doc.terms().json();
+const getTokenWord = (token: PosToken | undefined): string => {
+  if (!token) return '';
+  return token.text.replace(/\s+/g, ' ').trim();
+};
 
-  // Helper function to map POS tags to colors
-  const getColorForTags = (tags: string[]): string | undefined => {
-    if (tags.includes('Noun')) return '#82b1ff'; // Blue
-    if (tags.includes('Verb')) return '#ff8a65'; // Orange
-    if (tags.includes('Adjective')) return '#aed581'; // Green
-    if (tags.includes('Adverb')) return '#ce93d8'; // Purple
-    if (tags.includes('Preposition') || tags.includes('Conjunction')) return '#9e9e9e'; // Gray
-    return undefined; // Default color
+export const PosColoredSentence: React.FC<PosColoredSentenceProps> = ({ text, posTokens, sentenceIndex, showSlashGuide = false }) => {
+  // Keep the current prop shape for compatibility even though sentenceIndex is not used here.
+  void sentenceIndex;
+
+  const getColorForPos = (pos: string): string | undefined => {
+    switch (pos) {
+      case 'Noun':
+      case 'Pronoun':
+        return '#82b1ff';
+      case 'Verb':
+        return '#ff8a65';
+      case 'Adjective':
+        return '#aed581';
+      case 'Adverb':
+        return '#ce93d8';
+      case 'Preposition':
+      case 'Conjunction':
+        return '#9e9e9e';
+      case 'Interjection':
+        return '#ffd54f';
+      case 'Article':
+        return '#bdbdbd';
+      default:
+        return undefined;
+    }
   };
 
+  if (!posTokens || posTokens.length === 0) {
+    return <Text>{text}</Text>;
+  }
+
   return (
-    <span style={{ lineHeight: 1.5 }}>
-      {details.map((termDetail: any, i: number) => {
-        // Find the specific term inside the detail object
-        const term = termDetail.terms?.[0];
-        if (!term) return <React.Fragment key={i}>{termDetail.text}</React.Fragment>;
+    <YStack paddingTop="$1" paddingBottom="$1" position="relative">
+      <Text lineHeight="$5">
+        {posTokens.flatMap((token, i) => {
+          const color = getColorForPos(token.pos);
+          const word = getTokenWord(token).toLowerCase();
+          const prevToken = posTokens[i - 1];
+          const prevWord = getTokenWord(prevToken);
+          const isWordToken = /^[a-z][a-z'-]*$/i.test(word);
+          const isClauseTrigger = token.pos === 'Conjunction' || CLAUSE_TRIGGER_WORDS.has(word);
+          const shouldSlashBefore = showSlashGuide && i > 0 && isWordToken && isClauseTrigger
+            && prevWord !== ',' && prevWord !== ';' && prevWord !== ':';
+          const shouldSlashAfter = showSlashGuide && (word === ',' || word === ';' || word === ':');
 
-        const color = getColorForTags(term.tags);
+          const chunks: React.ReactNode[] = [];
+          if (shouldSlashBefore) {
+            chunks.push(
+              <Text key={`slash-before-${i}`} color="#7dd3fc" fontWeight="700">
+                {' / '}
+              </Text>
+            );
+          }
 
-        return (
-          <span key={i}>
-            <span style={{ color: color || 'inherit', transition: 'color 0.2s' }} title={term.tags.join(', ')}>
-              {term.text}
-            </span>
-            {term.post && <span>{term.post}</span>}
-          </span>
-        );
-      })}
-    </span>
+          chunks.push(
+            <Text key={`token-${i}`} color={color || '$color'}>
+              {token.text}
+            </Text>
+          );
+
+          if (shouldSlashAfter) {
+            chunks.push(
+              <Text key={`slash-after-${i}`} color="#7dd3fc" fontWeight="700">
+                {' / '}
+              </Text>
+            );
+          }
+
+          return chunks;
+        })}
+      </Text>
+    </YStack>
   );
 };

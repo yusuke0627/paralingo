@@ -6,6 +6,14 @@ export const TranslationResultSchema = z.object({
     z.object({
       en: z.string(),
       ja: z.string(),
+      posTokens: z.array(
+        z.object({
+          text: z.string(),
+          pos: z.enum(['Noun', 'Verb', 'Adjective', 'Adverb', 'Pronoun', 'Preposition', 'Conjunction', 'Interjection', 'Article', 'Punctuation', 'Other']),
+          modifies: z.number().optional(),
+          modificationType: z.string().optional()
+        })
+      ).optional(),
     })
   ),
 });
@@ -33,7 +41,12 @@ export class TranslationCore {
    */
   splitIntoSentences(text: string): string[] {
     if (!text) return [];
+    const normalized = text.trim().replace(/\s*\n+\s*/g, ' ');
+    if (!normalized) return [];
     // Basic regex for sentence splitting
-    return text.split(/(?<=[.!?])\s+/);
+    return normalized
+      .split(/(?<=[.!?])\s+/)
+      .map((sentence) => sentence.trim())
+      .filter((sentence) => sentence.length > 0);
   }
 }

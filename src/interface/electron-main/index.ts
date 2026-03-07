@@ -5,10 +5,10 @@ import path from 'path';
 import { RunTranslationFromClipboard } from '../../application/use-cases/RunTranslationFromClipboard';
 // Ports & Gateways
 import { ElectronClipboardPort } from '../../infrastructure/os/ElectronClipboardPort';
-import { GeminiTranslatorGateway } from '../../infrastructure/ai/GeminiTranslatorGateway';
+import { MultiProviderTranslatorOrchestrator } from '../../infrastructure/ai/MultiProviderTranslatorOrchestrator';
 import { SQLiteVocabRepository } from '../../infrastructure/db/SQLiteVocabRepository';
 import { LocalFileSettingsRepository } from '../../infrastructure/os/LocalSettingsRepository';
-import { VocabMemo } from '../../domain/entities';
+import { ReviewItem, ReviewStatus, VocabMemo } from '../../domain/entities';
 
 export class ElectronMainInterface {
   private translationUseCase: RunTranslationFromClipboard;
@@ -22,7 +22,7 @@ export class ElectronMainInterface {
     this.settingsRepository = new LocalFileSettingsRepository(userDataPath);
     this.vocabRepository = new SQLiteVocabRepository(path.join(userDataPath, 'paralingo.sqlite'));
     const clipboardPort = new ElectronClipboardPort(clipboard);
-    const translatorGateway = new GeminiTranslatorGateway(this.settingsRepository);
+    const translatorGateway = new MultiProviderTranslatorOrchestrator(this.settingsRepository);
 
     // Use Case definition
     this.translationUseCase = new RunTranslationFromClipboard(clipboardPort, translatorGateway);
@@ -36,14 +36,26 @@ export class ElectronMainInterface {
     try {
       const ret = globalShortcut.register(shortcutKey, async () => {
         console.log(`Global shortcut triggered: ${shortcutKey}`);
+        
+        // Show window immediately to provide feedback
+        if (!this.mainWindow.isVisible()) {
+          this.mainWindow.show();
+          this.mainWindow.focus();
+        }
+
         try {
+          // Tell frontend we are starting
+          this.mainWindow.webContents.send('translation-result', { loading: true });
+          
           const result = await this.translationUseCase.execute();
           this.mainWindow.webContents.send('translation-result', { pairs: result });
+        } catch (error: any) {
+          console.error('Translation error:', error);
+          this.mainWindow.webContents.send('translation-result', { ok: false, error: error.message });
+          // Ensure window is visible even on error
           if (!this.mainWindow.isVisible()) {
             this.mainWindow.show();
           }
-        } catch (error: any) {
-          this.mainWindow.webContents.send('translation:result', { ok: false, error: error.message });
         }
       });
 
@@ -64,8 +76,14 @@ export class ElectronMainInterface {
       }
     });
 
-    ipcMain.handle('save-vocab', async (_, en: string, ja: string) => {
+    ipcMain.handle('save-vocab', async (_, payloadOrEn: any, jaMaybe?: string) => {
       try {
+        const en = typeof payloadOrEn === 'object' ? payloadOrEn?.en : payloadOrEn;
+        const ja = typeof payloadOrEn === 'object' ? payloadOrEn?.ja : jaMaybe;
+        if (!en || !ja) {
+          throw new Error('Invalid save-vocab payload');
+        }
+
         // Create a basic VocabMemo
         const memo: VocabMemo = {
           term: en,
@@ -74,6 +92,47 @@ export class ElectronMainInterface {
           createdAt: new Date()
         };
         await this.vocabRepository.save(memo);
+        return { ok: true };
+      } catch (error: any) {
+        return { ok: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('save-review-item', async (_, payload: any) => {
+      try {
+        const reason = payload?.reason === 'unknown' ? 'unknown' : 'later';
+        const item: ReviewItem = {
+          en: payload?.en,
+          ja: payload?.ja,
+          posTokens: Array.isArray(payload?.posTokens) ? payload.posTokens : undefined,
+          reason,
+          status: 'pending',
+          createdAt: new Date(),
+        };
+        if (!item.en || !item.ja) {
+          throw new Error('Invalid review payload');
+        }
+        await this.vocabRepository.saveReview(item);
+        return { ok: true };
+      } catch (error: any) {
+        return { ok: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('list-review-items', async (_, status?: ReviewStatus) => {
+      try {
+        const items = await this.vocabRepository.listReviews(status);
+        return { ok: true, items };
+      } catch (error: any) {
+        return { ok: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('set-review-item-status', async (_, payload: any) => {
+      try {
+        if (!payload?.id) throw new Error('Missing review id');
+        const status: ReviewStatus = payload.status === 'resolved' ? 'resolved' : 'pending';
+        await this.vocabRepository.updateReviewStatus(payload.id, status);
         return { ok: true };
       } catch (error: any) {
         return { ok: false, error: error.message };

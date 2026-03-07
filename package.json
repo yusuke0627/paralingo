@@ -1,6 +1,7 @@
 {
   "name": "paralingo",
   "version": "1.0.0",
+  "type": "module",
   "description": "ParaLingo is a Mac-first translation and vocabulary app",
   "main": "dist-main/main.js",
   "scripts": {
@@ -27,6 +28,7 @@
     "react-dom": "^19.2.4",
     "react-native-svg": "^15.15.3",
     "react-native-web": "^0.21.2",
+    "react-xarrows": "^2.0.2",
     "sqlite3": "^5.1.7",
     "tamagui": "^2.0.0-rc.22",
     "zod": "^3.22.4"

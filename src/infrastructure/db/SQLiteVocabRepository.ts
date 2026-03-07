@@ -1,6 +1,6 @@
 import sqlite3 from "sqlite3";
 import { VocabRepository } from "../../application/ports/VocabRepository";
-import { VocabMemo } from "../../domain/entities";
+import { ReviewItem, ReviewStatus, VocabMemo } from "../../domain/entities";
 
 export class SQLiteVocabRepository implements VocabRepository {
   private db: sqlite3.Database;
@@ -25,6 +25,23 @@ export class SQLiteVocabRepository implements VocabRepository {
           createdAt INTEGER NOT NULL
         )
       `);
+
+      this.db.run(`
+        CREATE TABLE IF NOT EXISTS review_items (
+          id TEXT PRIMARY KEY,
+          en TEXT NOT NULL,
+          ja TEXT NOT NULL,
+          reason TEXT NOT NULL,
+          status TEXT NOT NULL,
+          createdAt INTEGER NOT NULL
+        )
+      `);
+
+      this.db.run(`ALTER TABLE review_items ADD COLUMN posTokens TEXT`, (err) => {
+        if (err && !String(err.message || '').includes('duplicate column name')) {
+          console.error('Failed to migrate review_items.posTokens:', err.message);
+        }
+      });
     });
   }
 
@@ -114,5 +131,36 @@ export class SQLiteVocabRepository implements VocabRepository {
       content: JSON.parse(row.content),
       createdAt: new Date(row.createdAt),
     };
+  }
+
+  async saveReview(item: ReviewItem): Promise<void> {
+    const id = item.id || Math.random().toString(36).slice(2, 11);
+    const createdAt = item.createdAt ? new Date(item.createdAt).getTime() : Date.now();
+    const posTokens = item.posTokens ? JSON.stringify(item.posTokens) : null;
+    await this.run(
+      `INSERT INTO review_items (id, en, ja, reason, status, createdAt, posTokens) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, item.en, item.ja, item.reason, item.status, createdAt, posTokens]
+    );
+  }
+
+  async listReviews(status?: ReviewStatus): Promise<ReviewItem[]> {
+    const hasStatusFilter = typeof status === 'string';
+    const rows = hasStatusFilter
+      ? await this.all<any>(`SELECT * FROM review_items WHERE status = ? ORDER BY createdAt DESC`, [status])
+      : await this.all<any>(`SELECT * FROM review_items ORDER BY createdAt DESC`);
+
+    return rows.map((row) => ({
+      id: row.id,
+      en: row.en,
+      ja: row.ja,
+      posTokens: row.posTokens ? JSON.parse(row.posTokens) : undefined,
+      reason: row.reason,
+      status: row.status,
+      createdAt: new Date(row.createdAt),
+    }));
+  }
+
+  async updateReviewStatus(id: string, status: ReviewStatus): Promise<void> {
+    await this.run(`UPDATE review_items SET status = ? WHERE id = ?`, [status, id]);
   }
 }
