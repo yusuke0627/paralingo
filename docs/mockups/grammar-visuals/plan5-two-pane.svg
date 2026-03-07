@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <defs>
+    <linearGradient id="bg5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e0f2fe"/>
+    </linearGradient>
+    <marker id="arr2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0,0 8,4 0,8" fill="#0ea5e9"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="720" fill="url(#bg5)"/>
+
+  <rect x="70" y="60" width="1140" height="600" rx="24" fill="#ffffff" stroke="#bfdbfe"/>
+  <text x="120" y="125" font-family="Helvetica, Arial, sans-serif" font-size="36" font-weight="700" fill="#0c4a6e">Plan 5: Two-Pane Sync</text>
+
+  <rect x="120" y="160" width="470" height="450" rx="18" fill="#f8fafc" stroke="#cbd5e1"/>
+  <text x="150" y="205" font-family="Helvetica, Arial, sans-serif" font-size="25" font-weight="700" fill="#334155">Reading Pane</text>
+  <rect x="145" y="235" width="420" height="110" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="165" y="280" font-family="Georgia, serif" font-size="31" fill="#0f172a">The book that I bought</text>
+  <text x="165" y="320" font-family="Georgia, serif" font-size="31" fill="#0f172a">yesterday is on the desk.</text>
+  <rect x="145" y="370" width="420" height="80" rx="12" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="165" y="418" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#1d4ed8">Selected token: book</text>
+
+  <rect x="650" y="160" width="510" height="450" rx="18" fill="#f0f9ff" stroke="#bae6fd"/>
+  <text x="680" y="205" font-family="Helvetica, Arial, sans-serif" font-size="25" font-weight="700" fill="#0c4a6e">Syntax Map Pane</text>
+
+  <rect x="840" y="250" width="130" height="56" rx="10" fill="#dbeafe"/>
+  <text x="874" y="286" font-family="Helvetica, Arial, sans-serif" font-size="26" fill="#1e3a8a">book</text>
+
+  <rect x="700" y="390" width="270" height="62" rx="12" fill="#e0f2fe"/>
+  <text x="725" y="430" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#0369a1">that I bought yesterday</text>
+
+  <rect x="1000" y="390" width="120" height="62" rx="12" fill="#e2e8f0"/>
+  <text x="1030" y="430" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#334155">is on</text>
+
+  <line x1="905" y1="306" x2="850" y2="390" stroke="#0ea5e9" stroke-width="4" marker-end="url(#arr2)"/>
+  <line x1="930" y1="306" x2="1030" y2="390" stroke="#64748b" stroke-width="3" marker-end="url(#arr2)"/>
+
+  <text x="680" y="540" font-family="Helvetica, Arial, sans-serif" font-size="22" fill="#0c4a6e">Tap either pane to sync highlight across both views</text>
+</svg>

@@ -1,6 +1,7 @@
 export interface AppSettings {
-  aiProvider: 'gemini' | 'chatgpt';
-  apiKey: string;
+  aiProvider: 'gemini' | 'chatgpt' | 'auto';
+  apiKey: string;          // Gemini API Key
+  openaiApiKey: string;    // OpenAI API Key
   globalShortcut: string;
 }
 
