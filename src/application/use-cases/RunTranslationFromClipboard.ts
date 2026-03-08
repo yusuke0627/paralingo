@@ -9,8 +9,9 @@ export class RunTranslationFromClipboard {
   ) {}
 
   async execute(): Promise<TranslationPair[]> {
-    const text = await this.clipboardPort.readText();
-    if (!text || text.trim().length === 0) {
+    const rawText = await this.clipboardPort.readText();
+    const text = rawText?.trim();
+    if (!text || text.length === 0) {
       throw new Error("Clipboard is empty or contains no valid text.");
     }
 

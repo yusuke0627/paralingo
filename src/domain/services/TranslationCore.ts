@@ -6,6 +6,14 @@ export const TranslationResultSchema = z.object({
     z.object({
       en: z.string(),
       ja: z.string(),
+      posTokens: z.array(
+        z.object({
+          text: z.string(),
+          pos: z.enum(['Noun', 'Verb', 'Adjective', 'Adverb', 'Pronoun', 'Preposition', 'Conjunction', 'Interjection', 'Article', 'Punctuation', 'Other']),
+          modifies: z.number().optional(),
+          modificationType: z.string().optional()
+        })
+      ).optional(),
     })
   ),
 });
@@ -33,7 +41,21 @@ export class TranslationCore {
    */
   splitIntoSentences(text: string): string[] {
     if (!text) return [];
-    // Basic regex for sentence splitting
-    return text.split(/(?<=[.!?])\s+/);
+    const normalized = text.replace(/\r\n/g, '\n').trim();
+    if (!normalized) return [];
+
+    // strict newline mode: if at least one newline exists, each line is treated as one sentence.
+    if (normalized.includes('\n')) {
+      return normalized
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+    }
+
+    // Fallback: basic punctuation splitting for a single-line paragraph.
+    return normalized
+      .split(/(?<=[.!?])\s+/)
+      .map((sentence) => sentence.trim())
+      .filter((sentence) => sentence.length > 0);
   }
 }

@@ -3,8 +3,9 @@ import { YStack, XStack, H1, Label, Input, Button, ScrollView, Text, Card, Theme
 import { Settings, Save, AlertCircle } from '@tamagui/lucide-icons';
 
 export const SettingsScreen: React.FC = () => {
-  const [apiKey, setApiKey] = useState('');
-  const [provider, setProvider] = useState<'gemini' | 'chatgpt'>('gemini');
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [provider, setProvider] = useState<'gemini' | 'chatgpt' | 'auto'>('auto');
   const [shortcut, setShortcut] = useState('CommandOrControl+Shift+T');
   const [status, setStatus] = useState<string | null>(null);
 
@@ -14,8 +15,9 @@ export const SettingsScreen: React.FC = () => {
       if (window.paralingo) {
         const settings = await window.paralingo.getSettings();
         if (settings) {
-          setApiKey(settings.geminiApiKey || '');
-          setProvider(settings.aiProvider || 'gemini');
+          setGeminiApiKey(settings.apiKey || '');
+          setOpenaiApiKey(settings.openaiApiKey || '');
+          setProvider(settings.aiProvider || 'auto');
           setShortcut(settings.globalShortcut || 'CommandOrControl+Shift+T');
         }
       }
@@ -27,7 +29,8 @@ export const SettingsScreen: React.FC = () => {
     setStatus('Saving...');
     // @ts-ignore
     const result = await window.paralingo.saveSettings({
-      geminiApiKey: apiKey,
+      apiKey: geminiApiKey,
+      openaiApiKey: openaiApiKey,
       aiProvider: provider,
       globalShortcut: shortcut
     });
@@ -42,74 +45,105 @@ export const SettingsScreen: React.FC = () => {
 
   return (
     <Theme name="dark">
-      <ScrollView p="$4" bg="$background">
-        <YStack space="$5">
-          <XStack space="$2" ai="center">
-            <Settings size="$1.5" />
-            <H1 size="$8">Settings</H1>
-          </XStack>
-
-          <Card p="$4" elevate bordered>
-            <YStack space="$4">
-              <YStack space="$2">
-                <Label fontWeight="bold">AI API Key (Gemini)</Label>
-                <Input
-                  secureTextEntry
-                  value={apiKey}
-                  onChangeText={setApiKey}
-                  placeholder="Enter your API Key"
-                  autoFocus
-                />
-                <Text size="$2" color="$color10">
-                  Your API key is stored locally and never sent to our servers.
-                </Text>
-              </YStack>
-
-              <YStack space="$2">
-                <Label fontWeight="bold">AI Provider</Label>
-                <XStack space="$2">
-                  <Button
-                    theme={provider === 'gemini' ? 'active' : undefined}
-                    onPress={() => setProvider('gemini')}
-                  >
-                    Gemini
-                  </Button>
-                  <Button
-                    theme={provider === 'chatgpt' ? 'active' : undefined}
-                    onPress={() => setProvider('chatgpt')}
-                  >
-                    ChatGPT
-                  </Button>
-                </XStack>
-              </YStack>
-
-              <YStack space="$2">
-                <Label fontWeight="bold">Global Shortcut</Label>
-                <Input value={shortcut} onChangeText={setShortcut} />
-                <Text size="$2" color="$color10">
-                  Default: CommandOrControl+Shift+T
-                </Text>
-              </YStack>
-            </YStack>
-          </Card>
-
-          <Button
-            icon={<Save />}
-            themeInverse
-            onPress={handleSave}
-            size="$5"
-          >
-            Save Changes
-          </Button>
-
-          {status && (
-            <XStack ai="center" jc="center" space="$2" p="$2" bg="$green5" br="$4">
-              <AlertCircle size="$1" color="$green10" />
-              <Text color="$green10">{status}</Text>
+      <YStack flex={1} bg="$background">
+        <ScrollView flex={1} width="100%">
+          <YStack p="$4" space="$5">
+            <XStack space="$3" ai="center">
+              <Settings size={28} color="$color" />
+              <H1 size="$8" fontWeight="800">Settings</H1>
             </XStack>
-          )}
-        </YStack>
-      </ScrollView>
+
+            <Card p="$4" elevate bordered space="$4">
+              <YStack space="$4">
+                {/* Gemini API Key */}
+                <YStack space="$2">
+                  <Label fontWeight="bold">Gemini API Key</Label>
+                  <Input
+                    secureTextEntry
+                    value={geminiApiKey}
+                    onChangeText={setGeminiApiKey}
+                    placeholder="Enter your Gemini API Key"
+                  />
+                  <Text fontSize="$2" color="$color10">
+                    Get your key from ai.google.dev
+                  </Text>
+                </YStack>
+
+                {/* OpenAI API Key */}
+                <YStack space="$2">
+                  <Label fontWeight="bold">OpenAI (ChatGPT) API Key</Label>
+                  <Input
+                    secureTextEntry
+                    value={openaiApiKey}
+                    onChangeText={setOpenaiApiKey}
+                    placeholder="Enter your OpenAI API Key"
+                  />
+                  <Text fontSize="$2" color="$color10">
+                    Get your key from platform.openai.com
+                  </Text>
+                </YStack>
+
+                {/* Provider Selection */}
+                <YStack space="$2">
+                  <Label fontWeight="bold">AI Provider</Label>
+                  <XStack space="$2">
+                    <Button
+                      theme={provider === 'auto' ? 'active' : undefined}
+                      onPress={() => setProvider('auto')}
+                      flex={1}
+                    >
+                      Auto (Round Robin)
+                    </Button>
+                    <Button
+                      theme={provider === 'gemini' ? 'active' : undefined}
+                      onPress={() => setProvider('gemini')}
+                      flex={1}
+                    >
+                      Gemini
+                    </Button>
+                    <Button
+                      theme={provider === 'chatgpt' ? 'active' : undefined}
+                      onPress={() => setProvider('chatgpt')}
+                      flex={1}
+                    >
+                      ChatGPT
+                    </Button>
+                  </XStack>
+                  <Text fontSize="$2" color="$color10">
+                    Auto: 両方のキーを交互に利用し、制限時は自動で切替え
+                  </Text>
+                </YStack>
+
+                {/* Global Shortcut */}
+                <YStack space="$2">
+                  <Label fontWeight="bold">Global Shortcut</Label>
+                  <Input value={shortcut} onChangeText={setShortcut} />
+                  <Text fontSize="$2" color="$color10">
+                    Default: CommandOrControl+Shift+T
+                  </Text>
+                </YStack>
+              </YStack>
+            </Card>
+
+            <Button
+              icon={Save}
+              themeInverse
+              onPress={handleSave}
+              size="$5"
+              fontWeight="bold"
+            >
+              Save Changes
+            </Button>
+
+            {status && (
+              <XStack ai="center" jc="center" space="$2" p="$3" bg="$background02" br="$4" bordered borderColor="$borderColor">
+                <AlertCircle size={16} color="$color10" />
+                <Text color="$color" fontSize="$3">{status}</Text>
+              </XStack>
+            )}
+          </YStack>
+        </ScrollView>
+      </YStack>
     </Theme>
   );
 };

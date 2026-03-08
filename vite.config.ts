@@ -17,6 +17,18 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('@tamagui/lucide-icons') || id.includes('lucide-react-native')) return 'vendor-icons';
+          if (id.includes('@tamagui') || id.includes('tamagui')) return 'vendor-tamagui';
+          if (id.includes('@google/generative-ai')) return 'vendor-ai';
+          return;
+        },
+      },
+    },
   },
   resolve: {
     alias: {

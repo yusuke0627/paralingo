@@ -5,8 +5,9 @@ import { AppSettings, SettingsRepository } from "../../application/ports/Setting
 export class LocalFileSettingsRepository implements SettingsRepository {
   private configPath: string;
   private defaultSettings: AppSettings = {
-    aiProvider: "gemini",
+    aiProvider: "auto",
     apiKey: "",
+    openaiApiKey: "",
     globalShortcut: "CommandOrControl+Shift+T"
   };
 

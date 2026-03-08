@@ -1,14 +1,10 @@
 node_modules
-
-# Build artifacts
-dist/
-dist-main/
-
-# Tool caches
-.tamagui/
-
-# Local ad-hoc scripts
+dist
+dist-main
+out
+.tamagui
+.DS_Store
+*.png
 test-*.js
-
-# Temporary mockup images
-concept_*.png
+.gemini
+package-lock.json

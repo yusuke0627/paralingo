@@ -1,21 +1,23 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron';
 import path from 'path';
 import { ElectronMainInterface } from './interface/electron-main/index';
 
 let mainWindow: BrowserWindow | null = null;
 let mainInterface: ElectronMainInterface | null = null;
+let tray: Tray | null = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 400,
-    height: 600,
-    show: false, // Hide initially until triggered
+    width: 980,
+    height: 760,
+    show: true, // Show initially for visibility during development
     webPreferences: {
       preload: path.join(__dirname, 'interface/electron-main/preload.js'),
       nodeIntegration: false,
       contextIsolation: true,
     },
     // Make it look like a popup/overlay
+    backgroundColor: '#1a1a1a', // Ensure background is visible even if CSS is slow
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -43,6 +45,24 @@ function createWindow() {
   // Setup Clean Architecture interface
   mainInterface = new ElectronMainInterface(mainWindow);
   mainInterface.setup();
+
+  // Setup Tray
+  const iconPath = path.join(__dirname, '../assets/tray_template.png');
+  const trayIcon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+  trayIcon.setTemplateImage(true);
+  
+  tray = new Tray(trayIcon);
+  const contextMenu = Menu.buildFromTemplate([
+    { label: 'Show Translation', click: () => mainWindow?.show() },
+    { type: 'separator' },
+    { label: 'Quit ParaLingo', click: () => app.quit() },
+  ]);
+  
+  tray.setToolTip('ParaLingo');
+  tray.setContextMenu(contextMenu);
+  tray.on('click', () => {
+    mainWindow?.isVisible() ? mainWindow.hide() : mainWindow?.show();
+  });
 }
 
 app.whenReady().then(() => {
@@ -51,6 +71,8 @@ app.whenReady().then(() => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
+    } else {
+      mainWindow?.show();
     }
   });
 });
