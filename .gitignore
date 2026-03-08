@@ -1,1 +1,14 @@
 node_modules
+
+# Build artifacts
+dist/
+dist-main/
+
+# Tool caches
+.tamagui/
+
+# Local ad-hoc scripts
+test-*.js
+
+# Temporary mockup images
+concept_*.png
