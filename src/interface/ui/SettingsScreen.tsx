@@ -8,8 +8,8 @@ export const SettingsScreen: React.FC = () => {
   const [provider, setProvider] = useState<'gemini' | 'chatgpt' | 'auto'>('auto');
   const [shortcut, setShortcut] = useState('CommandOrControl+Shift+T');
   const [status, setStatus] = useState<string | null>(null);
-  const [showGeminiApiKey, setShowGeminiApiKey] = useState(false);
-  const [showOpenaiApiKey, setShowOpenaiApiKey] = useState(false);
+  const [isGeminiApiKeyHidden, setIsGeminiApiKeyHidden] = useState(true);
+  const [isOpenaiApiKeyHidden, setIsOpenaiApiKeyHidden] = useState(true);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -63,7 +63,8 @@ export const SettingsScreen: React.FC = () => {
                   <XStack space="$2" ai="center">
                     <Input
                       flex={1}
-                      secureTextEntry={!showGeminiApiKey}
+                      secureTextEntry={isGeminiApiKeyHidden}
+                      type={isGeminiApiKeyHidden ? 'password' : 'text'}
                       value={geminiApiKey}
                       onChangeText={setGeminiApiKey}
                       placeholder="Enter your Gemini API Key"
@@ -71,10 +72,10 @@ export const SettingsScreen: React.FC = () => {
                     <Button
                       size="$3"
                       circular
-                      aria-label={showGeminiApiKey ? 'Gemini API Keyを隠す' : 'Gemini API Keyを表示'}
-                      title={showGeminiApiKey ? 'Gemini API Keyを隠す' : 'Gemini API Keyを表示'}
-                      icon={showGeminiApiKey ? EyeOff : Eye}
-                      onPress={() => setShowGeminiApiKey((current) => !current)}
+                      aria-label={isGeminiApiKeyHidden ? 'Gemini API Keyを表示' : 'Gemini API Keyを隠す'}
+                      title={isGeminiApiKeyHidden ? 'Gemini API Keyを表示' : 'Gemini API Keyを隠す'}
+                      icon={isGeminiApiKeyHidden ? EyeOff : Eye}
+                      onPress={() => setIsGeminiApiKeyHidden((current) => !current)}
                     />
                   </XStack>
                   <Text fontSize="$2" color="$color10">
@@ -88,7 +89,8 @@ export const SettingsScreen: React.FC = () => {
                   <XStack space="$2" ai="center">
                     <Input
                       flex={1}
-                      secureTextEntry={!showOpenaiApiKey}
+                      secureTextEntry={isOpenaiApiKeyHidden}
+                      type={isOpenaiApiKeyHidden ? 'password' : 'text'}
                       value={openaiApiKey}
                       onChangeText={setOpenaiApiKey}
                       placeholder="Enter your OpenAI API Key"
@@ -96,10 +98,10 @@ export const SettingsScreen: React.FC = () => {
                     <Button
                       size="$3"
                       circular
-                      aria-label={showOpenaiApiKey ? 'OpenAI API Keyを隠す' : 'OpenAI API Keyを表示'}
-                      title={showOpenaiApiKey ? 'OpenAI API Keyを隠す' : 'OpenAI API Keyを表示'}
-                      icon={showOpenaiApiKey ? EyeOff : Eye}
-                      onPress={() => setShowOpenaiApiKey((current) => !current)}
+                      aria-label={isOpenaiApiKeyHidden ? 'OpenAI API Keyを表示' : 'OpenAI API Keyを隠す'}
+                      title={isOpenaiApiKeyHidden ? 'OpenAI API Keyを表示' : 'OpenAI API Keyを隠す'}
+                      icon={isOpenaiApiKeyHidden ? EyeOff : Eye}
+                      onPress={() => setIsOpenaiApiKeyHidden((current) => !current)}
                     />
                   </XStack>
                   <Text fontSize="$2" color="$color10">
