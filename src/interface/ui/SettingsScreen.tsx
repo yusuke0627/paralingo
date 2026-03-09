@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { YStack, XStack, H1, Label, Input, Button, ScrollView, Text, Card, Theme } from 'tamagui';
-import { Settings, Save, AlertCircle } from '@tamagui/lucide-icons';
+import { Settings, Save, AlertCircle, Eye, EyeOff } from '@tamagui/lucide-icons';
 
 export const SettingsScreen: React.FC = () => {
   const [geminiApiKey, setGeminiApiKey] = useState('');
@@ -8,6 +8,8 @@ export const SettingsScreen: React.FC = () => {
   const [provider, setProvider] = useState<'gemini' | 'chatgpt' | 'auto'>('auto');
   const [shortcut, setShortcut] = useState('CommandOrControl+Shift+T');
   const [status, setStatus] = useState<string | null>(null);
+  const [isGeminiApiKeyHidden, setIsGeminiApiKeyHidden] = useState(true);
+  const [isOpenaiApiKeyHidden, setIsOpenaiApiKeyHidden] = useState(true);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -58,12 +60,24 @@ export const SettingsScreen: React.FC = () => {
                 {/* Gemini API Key */}
                 <YStack space="$2">
                   <Label fontWeight="bold">Gemini API Key</Label>
-                  <Input
-                    secureTextEntry
-                    value={geminiApiKey}
-                    onChangeText={setGeminiApiKey}
-                    placeholder="Enter your Gemini API Key"
-                  />
+                  <XStack space="$2" ai="center">
+                    <Input
+                      flex={1}
+                      secureTextEntry={isGeminiApiKeyHidden}
+                      type={isGeminiApiKeyHidden ? 'password' : 'text'}
+                      value={geminiApiKey}
+                      onChangeText={setGeminiApiKey}
+                      placeholder="Enter your Gemini API Key"
+                    />
+                    <Button
+                      size="$3"
+                      circular
+                      aria-label={isGeminiApiKeyHidden ? 'Gemini API Keyを表示' : 'Gemini API Keyを隠す'}
+                      title={isGeminiApiKeyHidden ? 'Gemini API Keyを表示' : 'Gemini API Keyを隠す'}
+                      icon={isGeminiApiKeyHidden ? EyeOff : Eye}
+                      onPress={() => setIsGeminiApiKeyHidden((current) => !current)}
+                    />
+                  </XStack>
                   <Text fontSize="$2" color="$color10">
                     Get your key from ai.google.dev
                   </Text>
@@ -72,12 +86,24 @@ export const SettingsScreen: React.FC = () => {
                 {/* OpenAI API Key */}
                 <YStack space="$2">
                   <Label fontWeight="bold">OpenAI (ChatGPT) API Key</Label>
-                  <Input
-                    secureTextEntry
-                    value={openaiApiKey}
-                    onChangeText={setOpenaiApiKey}
-                    placeholder="Enter your OpenAI API Key"
-                  />
+                  <XStack space="$2" ai="center">
+                    <Input
+                      flex={1}
+                      secureTextEntry={isOpenaiApiKeyHidden}
+                      type={isOpenaiApiKeyHidden ? 'password' : 'text'}
+                      value={openaiApiKey}
+                      onChangeText={setOpenaiApiKey}
+                      placeholder="Enter your OpenAI API Key"
+                    />
+                    <Button
+                      size="$3"
+                      circular
+                      aria-label={isOpenaiApiKeyHidden ? 'OpenAI API Keyを表示' : 'OpenAI API Keyを隠す'}
+                      title={isOpenaiApiKeyHidden ? 'OpenAI API Keyを表示' : 'OpenAI API Keyを隠す'}
+                      icon={isOpenaiApiKeyHidden ? EyeOff : Eye}
+                      onPress={() => setIsOpenaiApiKeyHidden((current) => !current)}
+                    />
+                  </XStack>
                   <Text fontSize="$2" color="$color10">
                     Get your key from platform.openai.com
                   </Text>
